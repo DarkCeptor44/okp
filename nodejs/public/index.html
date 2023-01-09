@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+    <title>One-Knowledge-Proof Example</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <style type="text/css">
+        * {
+            user-select: none;
+        }
+
+        body {
+            background-color: #080808;
+            color: #fff;
+            font-family: Roboto, sans-serif;
+            display: flex;
+            width: 100%;
+            height: 100%;
+            justify-content: center;
+
+        }
+
+        .card {
+            min-width: 20em;
+            min-height: 9em;
+            background: #121212;
+            border-radius: 0.9em;
+            display: flex;
+            flex-direction: column;
+            padding: 1em;
+        }
+
+        .card .card-header {
+            width: 100%;
+            height: max-content;
+            font-size: 1.5em;
+            padding-top: 0.2em;
+            padding-bottom: 0.7em;
+            text-align: center;
+        }
+
+        .card .card-content {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+        }
+
+        input {
+            transition: 150ms ease-in-out;
+            margin: 0.5em 0;
+            background-color: #212121;
+            color: #fff;
+            border: 0.1em solid transparent;
+            border-radius: 0.9em;
+            font-size: 1em;
+            padding: 0.3em 0.7em;
+            outline: 0;
+            text-align: center;
+        }
+
+        input:hover {
+            background-color: #313131;
+        }
+
+        input:focus {
+            border-color: #0066ff;
+            background-color: #000;
+        }
+
+        input:focus::placeholder {
+            color: #aaa;
+        }
+
+        .btn {
+            transition: 150ms ease-in-out;
+            margin: 0.5em 0;
+            background-color: #0066ff;
+            width: -webkit-fill-available;
+            height: max-content;
+            border: 0.1em solid transparent;
+            border-radius: 0.9em;
+            font-size: 1em;
+            padding: 0.3em;
+            outline: 0;
+            text-align: center;
+            cursor: pointer;
+            filter: none;
+        }
+
+        .btn:hover {
+            filter: brightness(1.25);
+        }
+
+        .btn:active {
+            filter: brightness(0.9);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card">
+        <div class="card-header">
+            One-Knowledge-Proof
+        </div>
+        <div class="card-content">
+            <input type="password" placeholder="Password..." id="auth-passfield" />
+            <div class="btn" id="btnSubmit">Submit</div>
+        </div>
+    </div>
+
+    <script type="text/javascript" src="/socket.io/socket.io.js" crossorigin="anonymous"></script>
+    <script type="text/javascript" src="crypto-js.min.js"></script>
+    <script type="text/javascript">
+        const d = (x) => document.querySelector(x);
+        const dA = (x) => document.querySelectorAll(x);
+        var ws = null;
+        let first = true;
+        let num = null;
+
+        setInterval(getConnection, 1000);
+
+        function setup() {
+            wsSupport = 'WebSocket' in window || 'MozWebSocket' in window;
+            if (wsSupport) {
+                d('#btnSubmit').addEventListener('click', function (e) {
+                    e.preventDefault();
+                    if (!num) return;
+
+                    let message = String(num);
+                    let secretKey = d('#auth-passfield').value.trim() || '';
+                    if (secretKey === '') return;
+
+                    let encrypted = CryptoJS.AES.encrypt(message, secretKey).toString();
+                    ws.emit('server-auth', { encmessage: encrypted });
+                    console.log('sent to server');
+                });
+
+                ws.on('client-num', function (data) {
+                    if (data && data.num) {
+                        num = data.num;
+                    }
+                });
+
+                ws.on('client-alert', function (data) {
+                    if (data && data.status) {
+                        alert('Access granted');
+                    }
+                    else if (data && !data.status) {
+                        alert('Acess denied');
+                    }
+                    else {
+                        console.warn('idk what happened');
+                    }
+                });
+            }
+            else {
+                console.warn('this browser does not support WebSocket');
+                alert('This browser does not support WebSocket');
+            }
+        }
+
+        function getConnection() {
+            if (ws === null) {
+                ws = io.connect();
+                setup();
+            }
+
+            if (ws.connected && first) {
+                first = false;
+            }
+            else if (!ws.connected && !first) {
+                first = true;
+            }
+        }
+    </script>
+</body>
+
+</html>
