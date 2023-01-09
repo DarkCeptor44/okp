@@ -8,7 +8,7 @@ const io = require('socket.io')(server);
 const os = require('os');
 const logger = require('morgan');
 
-const PORT = process.env.PORT || 8080;
+const PORT = parseInt(process.env.PORT) || 8080;
 
 app.set('trust proxy', 1);
 app.use(express.json());
