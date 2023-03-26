@@ -129,7 +129,7 @@
                     if (!num) return;
 
                     let message = String(num);
-                    let secretKey = d('#auth-passfield').value.trim() || '';
+                    let secretKey = getHash(d('#auth-passfield').value.trim()) || '';
                     if (secretKey === '') return;
 
                     let encrypted = CryptoJS.AES.encrypt(message, secretKey).toString();
@@ -173,6 +173,10 @@
             else if (!ws.connected && !first) {
                 first = true;
             }
+        }
+
+        function getHash(message) {
+            return CryptoJS.SHA256(message).toString(CryptoJS.enc.Hex);
         }
     </script>
 </body>
